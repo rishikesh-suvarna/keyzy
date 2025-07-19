@@ -42,7 +42,7 @@ func main() {
 	router.Use(middleware.CORS)
 
 	// Public routes
-	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
+	router.HandleFunc("/api/auth/auth/register", authHandler.Register).Methods("POST")
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
