@@ -5,9 +5,41 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false, // Set to true if you need cookies
+  timeout: 10000, // 10 second timeout
 });
 
-// Types for API responses
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    // Log requests in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url);
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized errors
+      console.error('Unauthorized request:', error.response.data);
+    } else if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK') {
+      console.error('Network error - check if backend is running on http://localhost:8080');
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Types for API responses (same as before)
 export interface PasswordEntry {
   id: string;
   user_id: string;

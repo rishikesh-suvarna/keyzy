@@ -35,35 +35,45 @@ func main() {
 	authHandler := handlers.NewAuthHandler(db)
 	passwordHandler := handlers.NewPasswordHandler(db, cfg.EncryptionKey)
 
-	// Setup routes
+	// Setup router
 	router := mux.NewRouter()
 
-	// Apply CORS middleware
 	router.Use(middleware.CORS)
 
-	// Public routes
-	router.HandleFunc("/api/auth/auth/register", authHandler.Register).Methods("POST")
-	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+	// Add a test endpoint to verify CORS
+	router.HandleFunc("/api/test", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("🧪 Test endpoint called - Method: %s", r.Method)
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
+		w.Write([]byte(`{"message": "CORS is working!", "method": "` + r.Method + `"}`))
+	}).Methods("GET", "OPTIONS")
 
-	// Protected routes
+	// Public routes (no auth required)
+	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("🏥 Health check called")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "ok"}`))
+	}).Methods("GET", "OPTIONS")
+
+	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
+
+	// Protected routes - create a subrouter with auth middleware
 	api := router.PathPrefix("/api").Subrouter()
 	api.Use(middleware.AuthMiddleware)
 
 	// User routes
-	api.HandleFunc("/user/profile", authHandler.GetProfile).Methods("GET")
+	api.HandleFunc("/user/profile", authHandler.GetProfile).Methods("GET", "OPTIONS")
 
 	// Password routes
-	api.HandleFunc("/passwords", passwordHandler.GetPasswords).Methods("GET")
-	api.HandleFunc("/passwords", passwordHandler.CreatePassword).Methods("POST")
-	api.HandleFunc("/passwords/{id}", passwordHandler.GetPassword).Methods("GET")
-	api.HandleFunc("/passwords/{id}", passwordHandler.UpdatePassword).Methods("PUT")
-	api.HandleFunc("/passwords/{id}", passwordHandler.DeletePassword).Methods("DELETE")
+	api.HandleFunc("/passwords", passwordHandler.GetPasswords).Methods("GET", "OPTIONS")
+	api.HandleFunc("/passwords", passwordHandler.CreatePassword).Methods("POST", "OPTIONS")
+	api.HandleFunc("/passwords/{id}", passwordHandler.GetPassword).Methods("GET", "OPTIONS")
+	api.HandleFunc("/passwords/{id}", passwordHandler.UpdatePassword).Methods("PUT", "OPTIONS")
+	api.HandleFunc("/passwords/{id}", passwordHandler.DeletePassword).Methods("DELETE", "OPTIONS")
 
 	// Password generation route
-	api.HandleFunc("/generate-password", passwordHandler.GeneratePassword).Methods("POST")
+	api.HandleFunc("/generate-password", passwordHandler.GeneratePassword).Methods("POST", "OPTIONS")
 
 	port := cfg.Port
 	if port == "" {
@@ -71,5 +81,8 @@ func main() {
 	}
 
 	log.Printf("🚀 Server starting on port %s", port)
+	log.Printf("🌐 CORS enabled for all routes")
+	log.Printf("🧪 Test CORS with: curl -X OPTIONS -H \"Origin: http://localhost:3000\" http://localhost:%s/api/test", port)
+
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }

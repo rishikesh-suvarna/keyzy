@@ -8,6 +8,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { apiClient } from './api';
@@ -20,6 +22,7 @@ interface AuthContextType {
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   getIdToken: () => Promise<string | null>;
+  loginWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -44,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Register user in our backend when they first sign up
         try {
           const token = await user.getIdToken();
-          await apiClient.post('/auth/auth/register', {
+          await apiClient.post('/auth/register', {
             firebase_uid: user.uid,
             email: user.email,
           }, {
@@ -99,6 +102,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   };
 
+  const loginWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+      toast.success('Logged in with Google!');
+      // Optionally register user in backend as in useEffect
+      const token = await result.user.getIdToken();
+      await apiClient.post('/auth/register', {
+        firebase_uid: result.user.uid,
+        email: result.user.email,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error: any) {
+      toast.error(error.message || 'Google sign-in failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -106,6 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     register,
     logout,
     getIdToken,
+    loginWithGoogle,
   };
 
   return (

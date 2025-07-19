@@ -13,18 +13,40 @@ import (
 	"google.golang.org/api/option"
 )
 
-// CORS middleware
+// CORS middleware with debug logging
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*") // In production, specify your frontend domain
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		origin := r.Header.Get("Origin")
 
+		// Debug logging
+		log.Printf("🔍 CORS Debug - Method: %s, Origin: %s, Path: %s", r.Method, origin, r.URL.Path)
+		log.Printf("🔍 Request Headers: %v", r.Header)
+
+		// Set CORS headers for ALL requests
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			log.Printf("✅ Set Access-Control-Allow-Origin to: %s", origin)
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			log.Printf("✅ Set Access-Control-Allow-Origin to: *")
+		}
+
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-CSRF-Token, X-Requested-With")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		log.Printf("✅ All CORS headers set")
+
+		// Handle preflight OPTIONS requests
 		if r.Method == "OPTIONS" {
+			log.Printf("🚀 Handling OPTIONS preflight request")
 			w.WriteHeader(http.StatusOK)
+			log.Printf("✅ Sent 200 OK for OPTIONS")
 			return
 		}
 
+		log.Printf("➡️ Passing request to next handler")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -76,28 +98,45 @@ func InitializeFirebase() {
 // AuthMiddleware validates Firebase JWT tokens
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("🔐 AuthMiddleware - Method: %s, Path: %s", r.Method, r.URL.Path)
+
+		// Skip auth for OPTIONS requests (already handled by CORS)
+		if r.Method == "OPTIONS" {
+			log.Printf("⏭️ Skipping auth for OPTIONS request")
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Get Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
+			log.Printf("❌ No Authorization header found")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Authorization header required",
+			})
 			return
 		}
 
 		// Extract token
 		tokenParts := strings.Split(authHeader, "Bearer ")
 		if len(tokenParts) != 2 {
-			http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+			log.Printf("❌ Invalid Authorization header format")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Invalid authorization header format",
+			})
 			return
 		}
 
 		idToken := tokenParts[1]
+		log.Printf("🎫 Token found: %s...", idToken[:10])
 
 		// For development, you might want to skip Firebase verification
-		// and just decode the token manually for testing
 		if authClient == nil {
-			// Development mode - just extract user info from token
-			// In production, always verify with Firebase
-			log.Printf("Development mode: Skipping Firebase token verification")
+			log.Printf("🚧 Development mode: Skipping Firebase token verification")
 			ctx := context.WithValue(r.Context(), "user_id", "dev-user-id")
 			ctx = context.WithValue(ctx, "firebase_uid", "dev-firebase-uid")
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -107,6 +146,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Verify Firebase token
 		token, err := authClient.VerifyIDToken(context.Background(), idToken)
 		if err != nil {
+			log.Printf("❌ Firebase token verification failed: %v", err)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -115,6 +155,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			})
 			return
 		}
+
+		log.Printf("✅ Token verified for user: %s", token.UID)
 
 		// Add user info to context
 		ctx := context.WithValue(r.Context(), "firebase_uid", token.UID)
