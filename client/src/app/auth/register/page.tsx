@@ -43,7 +43,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-4">
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
         <ThemeToggle />
@@ -52,15 +52,15 @@ export default function Register() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 dark:bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-glow">
-            <Shield className="h-8 w-8 text-white" />
+          <div className="mx-auto h-16 w-16 bg-black dark:bg-white rounded-full flex items-center justify-center mb-4 shadow-xl">
+            <Shield className="h-8 w-8 text-white dark:text-black" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Create your account</h2>
+          <h2 className="text-3xl font-bold text-black dark:text-white">Create your account</h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">Start securing your passwords today</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/20 border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-white dark:bg-black rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
             <div>
@@ -78,7 +78,7 @@ export default function Register() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field pl-10"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-black text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -100,7 +100,7 @@ export default function Register() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pl-10 pr-10"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-black text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
                   placeholder="Enter your password"
                 />
                 <button
@@ -133,7 +133,7 @@ export default function Register() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input-field pl-10 pr-10"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-black text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
                   placeholder="Confirm your password"
                 />
                 <button
@@ -159,11 +159,11 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 dark:bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-black dark:bg-white text-white dark:text-black py-3 px-4 rounded-lg font-medium hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white dark:border-black border-t-transparent mr-2"></div>
                   Creating account...
                 </div>
               ) : (
@@ -188,26 +188,8 @@ export default function Register() {
                 }
               }}
               disabled={loading}
-              className="w-full flex items-center justify-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M21.35 11.1h-9.18v2.98h5.26c-.23 1.25-1.39 3.67-5.26 3.67-3.17 0-5.76-2.62-5.76-5.85s2.59-5.85 5.76-5.85c1.81 0 3.02.77 3.72 1.43l2.54-2.47C17.13 3.94 15.36 3 13.17 3 7.88 3 3.5 7.38 3.5 12.5S7.88 22 13.17 22c6.08 0 7.5-4.25 7.5-6.25 0-.42-.05-.84-.13-1.22z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M3.5 12.5c0-1.09.18-2.13.5-3.08l2.54 1.98c-.15.45-.24.93-.24 1.43s.09.98.24 1.43l-2.54 1.98c-.32-.95-.5-1.99-.5-3.08z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M13.17 22c2.19 0 4.02-.72 5.35-1.97l-2.54-1.98c-.7.66-1.91 1.43-3.72 1.43-3.17 0-5.76-2.62-5.76-5.85 0-.5.09-.98.24-1.43l2.54-1.98c-.32.95-.5 1.99-.5 3.08 0 3.23 2.59 5.85 5.76 5.85z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M21.35 11.1c.08.38.13.8.13 1.22 0 2-1.42 6.25-7.5 6.25-2.19 0-4.02-.72-5.35-1.97l2.54-1.98c.7.66 1.91 1.43 3.72 1.43 3.17 0 5.03-2.42 5.26-3.67h-5.26v-2.98h9.18z"
-                />
-              </svg>
               Sign up with Google
             </button>
           </div>
@@ -216,7 +198,7 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">
+              <Link href="/auth/login" className="text-black dark:text-white hover:underline font-medium">
                 Sign in
               </Link>
             </p>
