@@ -8,6 +8,7 @@ import { Shield, Lock, Key, Eye, CheckCircle, Copy, RefreshCw, EyeOff, Settings,
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
+import Image from 'next/image';
 
 interface GeneratePasswordRequest {
   length: number;
@@ -152,38 +153,6 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      {/* <header className="relative z-50 backdrop-blur-sm bg-white/90 dark:bg-black/90 border-b border-gray-200 dark:border-gray-800">
-        <nav className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="relative">
-                <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg">
-                  <Shield className="h-6 w-6 text-white dark:text-black" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse"></div>
-              </div>
-              <span className="ml-3 text-2xl font-bold">
-                Keyzy
-              </span>
-            </div>
-            <div className="flex items-center space-x-6">
-              <ThemeToggle />
-              <Link
-                href="/auth/login"
-                className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/auth/register"
-                className="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </nav>
-      </header> */}
       <Navbar />
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
@@ -516,20 +485,21 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 bg-black dark:bg-gray-950 text-white py-16 border-t border-gray-800">
+      <footer className="relative z-10 bg-white dark:bg-gray-950 text-white py-16 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
-              <div className="w-10 h-10 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center shadow-lg mr-3">
-                <Shield className="h-6 w-6 text-black dark:text-white" />
-              </div>
-              <span className="text-2xl font-bold">
-                Keyzy
-              </span>
+              <Image
+                src="/logo-horizontal.png"
+                alt="Keyzy Logo"
+                width={200}
+                height={40}
+              // className="w-10 h-10 rounded-xl shadow-lg mr-3"
+              />
             </div>
             <div className="text-center md:text-right">
               <p className="text-gray-400 mb-2">
-                © 2024 Keyzy. Securing the digital world, one password at a time.
+                © 2025 Keyzy. Securing the digital world, one password at a time.
               </p>
               <p className="text-sm text-gray-500">
                 Built with ♥ for security and ✨ for beauty

@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Shield } from "lucide-react";
+import { LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
