@@ -52,34 +52,30 @@ export function ThemeProvider({
     setMounted(true);
   }, [storageKey]);
 
-  // Apply theme to document - CRUCIAL FIX for Tailwind CSS 4
+  // Apply theme to document - Updated for Tailwind CSS 3
   useEffect(() => {
     if (!mounted) return;
 
     const root = window.document.documentElement;
     const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
-    // Remove all theme classes first
-    root.classList.remove('light', 'dark');
+    // Remove both dark and light classes first
+    root.classList.remove('dark', 'light');
 
-    // Add the correct class
+    // Add the correct class for Tailwind CSS 3
     if (resolvedTheme === 'dark') {
       root.classList.add('dark');
-    } else {
-      root.classList.add('light');
     }
+    // For light mode, we don't add a class in Tailwind CSS 3
 
-    // IMPORTANT: Also set data attribute for Tailwind CSS 4
-    root.setAttribute('data-theme', resolvedTheme);
-
-    // Force a style recalculation
+    // Set color scheme for native styling
     root.style.colorScheme = resolvedTheme;
 
     console.log('Theme applied:', {
       theme,
       resolvedTheme,
       htmlClasses: root.className,
-      dataTheme: root.getAttribute('data-theme')
+      hasRootDarkClass: root.classList.contains('dark')
     });
 
     // Save to localStorage
