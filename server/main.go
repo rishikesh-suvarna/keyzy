@@ -13,10 +13,10 @@ import (
 )
 
 func main() {
-	// Load configuration first
+	// Load configuration
 	cfg := config.Load()
 
-	// Initialize Firebase after config is loaded
+	// Initialize Firebase
 	middleware.InitializeFirebase()
 
 	// Initialize database connection
@@ -40,17 +40,8 @@ func main() {
 
 	router.Use(middleware.CORS)
 
-	// Add a test endpoint to verify CORS
-	router.HandleFunc("/api/test", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Test endpoint called - Method: %s", r.Method)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message": "CORS is working!", "method": "` + r.Method + `"}`))
-	}).Methods("GET", "OPTIONS")
-
-	// Public routes (no auth required)
+	// Public routes
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Health check called")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
@@ -58,8 +49,10 @@ func main() {
 
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
 
-	// Protected routes - create a subrouter with auth middleware
+	// Protected routes
 	api := router.PathPrefix("/api").Subrouter()
+
+	// Apply CORS middleware to API routes
 	api.Use(middleware.AuthMiddleware)
 
 	// User routes
