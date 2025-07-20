@@ -1,4 +1,4 @@
-![Keyzy Logo](https://raw.githubusercontent.com/rishikesh-suvarna/keyzy/main/assets/logo.png)
+![Keyzy Logo](https://raw.githubusercontent.com/rishikesh-suvarna/keyzy/main/logo-horizontal.png)
 
 
 # Keyzy - Secure Password Manager
