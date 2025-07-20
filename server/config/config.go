@@ -24,9 +24,9 @@ func Load() *Config {
 	}
 
 	config := &Config{
-		DatabaseURL:                  getEnv("DATABASE_URL", "postgres://user:password@localhost/password_manager?sslmode=disable"),
-		EncryptionKey:                getEnv("ENCRYPTION_KEY", "your-32-character-secret-key-here"),
-		FirebaseProject:              getEnv("FIREBASE_PROJECT_ID", "your-firebase-project-id"),
+		DatabaseURL:                  getEnv("DATABASE_URL", ""),
+		EncryptionKey:                getEnv("ENCRYPTION_KEY", ""),
+		FirebaseProject:              getEnv("FIREBASE_PROJECT_ID", ""),
 		GoogleApplicationCredentials: getEnv("GOOGLE_APPLICATION_CREDENTIALS", ""),
 		Port:                         getEnv("PORT", "8080"),
 	}
@@ -52,13 +52,6 @@ func Load() *Config {
 		log.Printf("Warning: Using default Firebase project ID. Set FIREBASE_PROJECT_ID environment variable.")
 	}
 
-	// Print config for debugging (without sensitive data)
-	log.Printf("Using environment variable DATABASE_URL=%s", config.DatabaseURL)
-	log.Printf("Using environment variable ENCRYPTION_KEY=%s", maskKey(config.EncryptionKey))
-	log.Printf("Using environment variable FIREBASE_PROJECT_ID=%s", config.FirebaseProject)
-	log.Printf("Using environment variable GOOGLE_APPLICATION_CREDENTIALS=%s", config.GoogleApplicationCredentials)
-	log.Printf("Using environment variable PORT=%s", config.Port)
-
 	return config
 }
 
@@ -67,11 +60,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-func maskKey(key string) string {
-	if len(key) <= 8 {
-		return "****"
-	}
-	return key[:4] + "****" + key[len(key)-4:]
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"password-manager/config"
 	"strings"
 
 	firebase "firebase.google.com/go/v4"
@@ -17,18 +18,12 @@ import (
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
+		log.Printf("Method: %s, Origin: %s, Path: %s", r.Method, origin, r.URL.Path)
 
-		// Debug logging
-		log.Printf("🔍 CORS Debug - Method: %s, Origin: %s, Path: %s", r.Method, origin, r.URL.Path)
-		log.Printf("🔍 Request Headers: %v", r.Header)
-
-		// Set CORS headers for ALL requests
 		if origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			log.Printf("✅ Set Access-Control-Allow-Origin to: %s", origin)
 		} else {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			log.Printf("✅ Set Access-Control-Allow-Origin to: *")
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -36,17 +31,11 @@ func CORS(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 
-		log.Printf("✅ All CORS headers set")
-
-		// Handle preflight OPTIONS requests
 		if r.Method == "OPTIONS" {
-			log.Printf("🚀 Handling OPTIONS preflight request")
 			w.WriteHeader(http.StatusOK)
-			log.Printf("✅ Sent 200 OK for OPTIONS")
 			return
 		}
 
-		log.Printf("➡️ Passing request to next handler")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -58,8 +47,8 @@ var authClient *auth.Client
 func InitializeFirebase() {
 	ctx := context.Background()
 
-	// Get service account path from environment
-	serviceAccountPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	// Get service account path from config
+	serviceAccountPath := config.Load().GoogleApplicationCredentials
 
 	var app *firebase.App
 	var err error
@@ -72,7 +61,6 @@ func InitializeFirebase() {
 			return
 		}
 
-		log.Printf("Initializing Firebase with service account: %s", serviceAccountPath)
 		app, err = firebase.NewApp(ctx, nil, option.WithCredentialsFile(serviceAccountPath))
 	} else {
 		log.Printf("No GOOGLE_APPLICATION_CREDENTIALS found, trying default credentials...")
@@ -91,18 +79,14 @@ func InitializeFirebase() {
 		log.Printf("Warning: Failed to get Firebase Auth client: %v", err)
 		authClient = nil
 	} else {
-		log.Printf("✅ Firebase authentication initialized successfully")
+		log.Printf("Firebase authentication initialized successfully")
 	}
 }
 
 // AuthMiddleware validates Firebase JWT tokens
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("🔐 AuthMiddleware - Method: %s, Path: %s", r.Method, r.URL.Path)
-
-		// Skip auth for OPTIONS requests (already handled by CORS)
 		if r.Method == "OPTIONS" {
-			log.Printf("⏭️ Skipping auth for OPTIONS request")
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -110,7 +94,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Get Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			log.Printf("❌ No Authorization header found")
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -122,7 +105,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Extract token
 		tokenParts := strings.Split(authHeader, "Bearer ")
 		if len(tokenParts) != 2 {
-			log.Printf("❌ Invalid Authorization header format")
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -132,11 +114,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		idToken := tokenParts[1]
-		log.Printf("🎫 Token found: %s...", idToken[:10])
 
-		// For development, you might want to skip Firebase verification
 		if authClient == nil {
-			log.Printf("🚧 Development mode: Skipping Firebase token verification")
 			ctx := context.WithValue(r.Context(), "user_id", "dev-user-id")
 			ctx = context.WithValue(ctx, "firebase_uid", "dev-firebase-uid")
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -146,7 +125,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Verify Firebase token
 		token, err := authClient.VerifyIDToken(context.Background(), idToken)
 		if err != nil {
-			log.Printf("❌ Firebase token verification failed: %v", err)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -155,8 +133,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			})
 			return
 		}
-
-		log.Printf("✅ Token verified for user: %s", token.UID)
 
 		// Add user info to context
 		ctx := context.WithValue(r.Context(), "firebase_uid", token.UID)

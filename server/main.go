@@ -42,7 +42,7 @@ func main() {
 
 	// Add a test endpoint to verify CORS
 	router.HandleFunc("/api/test", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("🧪 Test endpoint called - Method: %s", r.Method)
+		log.Printf("Test endpoint called - Method: %s", r.Method)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"message": "CORS is working!", "method": "` + r.Method + `"}`))
@@ -50,7 +50,7 @@ func main() {
 
 	// Public routes (no auth required)
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("🏥 Health check called")
+		log.Printf("Health check called")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
@@ -80,9 +80,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("🚀 Server starting on port %s", port)
-	log.Printf("🌐 CORS enabled for all routes")
-	log.Printf("🧪 Test CORS with: curl -X OPTIONS -H \"Origin: http://localhost:3000\" http://localhost:%s/api/test", port)
+	log.Printf("Server starting on port %s", port)
 
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
