@@ -22,6 +22,7 @@ import {
 import toast from 'react-hot-toast';
 import PasswordModal from '../../components/PasswordModal';
 import GeneratePasswordModal from '../../components/GeneratePasswordModal';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function Dashboard() {
   const { user, logout, getIdToken } = useAuth();
@@ -123,31 +124,32 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 dark:border-blue-400 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="glass-effect border-b border-white/30 sticky top-0 z-40">
+      <header className="glass-effect border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="p-2 bg-primary-600 rounded-xl mr-3 shadow-glow">
+              <div className="p-2 bg-blue-600 dark:bg-blue-600 rounded-xl mr-3 shadow-glow">
                 <Shield className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">SecurePass</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">SecurePass</h1>
             </div>
 
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 hidden sm:block">
+              <ThemeToggle />
+              <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                 Welcome, {user?.email}
               </span>
               <button
                 onClick={logout}
-                className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-white/50"
+                className="flex items-center px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <LogOut className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">Logout</span>
@@ -161,14 +163,14 @@ export default function Dashboard() {
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div className="animate-fade-in">
-            <h2 className="text-3xl font-bold text-gray-900 text-balance">Your Passwords</h2>
-            <p className="text-gray-600 mt-1">Manage your secure passwords</p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 text-balance">Your Passwords</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your secure passwords</p>
           </div>
 
           <div className="flex space-x-3 animate-slide-up">
             <button
               onClick={() => setIsGenerateModalOpen(true)}
-              className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-card hover:shadow-card-hover"
+              className="flex items-center px-4 py-2 bg-emerald-600 dark:bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 dark:hover:bg-emerald-700 transition-all duration-200 shadow-card hover:shadow-card-hover"
             >
               <Key className="h-4 w-4 mr-2" />
               Generate
@@ -186,7 +188,7 @@ export default function Dashboard() {
         {/* Search Bar */}
         <div className="mb-6 animate-slide-up">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search passwords..."
@@ -200,13 +202,13 @@ export default function Dashboard() {
         {/* Password Grid */}
         {filteredPasswords.length === 0 ? (
           <div className="text-center py-16 animate-fade-in">
-            <div className="p-4 bg-primary-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <Shield className="h-10 w-10 text-primary-600" />
+            <div className="p-4 primary-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <Shield className="h-10 w-10 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               {passwords.length === 0 ? 'No passwords yet' : 'No passwords found'}
             </h3>
-            <p className="text-gray-600 mb-8 max-w-sm mx-auto text-balance">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto text-balance">
               {passwords.length === 0
                 ? 'Add your first password to get started with secure password management.'
                 : 'Try adjusting your search terms to find what you\'re looking for.'
@@ -233,11 +235,11 @@ export default function Dashboard() {
                 {/* Service Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center min-w-0 flex-1">
-                    <div className="h-12 w-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                    <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl flex items-center justify-center mr-3 shadow-sm">
                       <Globe className="h-6 w-6 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-gray-900 truncate">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {password.service_name}
                       </h3>
                       {password.service_url && (
@@ -245,7 +247,7 @@ export default function Dashboard() {
                           href={password.service_url.startsWith('http') ? password.service_url : `https://${password.service_url}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-primary-600 hover:text-primary-700 truncate block transition-colors"
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block transition-colors"
                         >
                           {password.service_url}
                         </a>
@@ -256,13 +258,13 @@ export default function Dashboard() {
                   <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditPassword(password)}
-                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeletePassword(password.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -273,22 +275,22 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {password.username && (
                     <div className="flex items-center">
-                      <User className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
-                      <span className="text-sm text-gray-600 truncate">{password.username}</span>
+                      <User className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{password.username}</span>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <div className="flex items-center flex-1 min-w-0">
-                      <Key className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
-                      <span className="text-sm font-mono truncate">
+                      <Key className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                      <span className="text-sm font-mono truncate text-gray-900 dark:text-gray-100">
                         {showPasswords[password.id] ? password.password : '••••••••••••'}
                       </span>
                     </div>
                     <div className="flex space-x-1 ml-3">
                       <button
                         onClick={() => togglePasswordVisibility(password.id)}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-all"
+                        className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
                       >
                         {showPasswords[password.id] ? (
                           <EyeOff className="h-4 w-4" />
@@ -298,7 +300,7 @@ export default function Dashboard() {
                       </button>
                       <button
                         onClick={() => handleCopyPassword(password.password)}
-                        className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-all"
+                        className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-all"
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -307,15 +309,15 @@ export default function Dashboard() {
 
                   {password.notes && (
                     <div className="flex items-start">
-                      <FileText className="h-4 w-4 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-600 line-clamp-2">{password.notes}</span>
+                      <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{password.notes}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Timestamp */}
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Updated {new Date(password.updated_at).toLocaleDateString()}
                   </p>
                 </div>

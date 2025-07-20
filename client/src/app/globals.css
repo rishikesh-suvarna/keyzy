@@ -1,1 +1,97 @@
 @import "tailwindcss";
+
+/* FORCE LIGHT MODE - Override Tailwind's dark mode completely */
+html.light {
+  color-scheme: light !important;
+}
+
+html.dark {
+  color-scheme: dark !important;
+}
+
+/* Force light mode colors when .light class is present */
+html.light .dark\:text-red-500 {
+  color: rgb(59 130 246) !important;
+  /* blue-500 */
+}
+
+html.light .dark\:bg-gray-900 {
+  background-color: white !important;
+}
+
+html.light .dark\:bg-gray-800 {
+  background-color: rgb(243 244 246) !important;
+  /* gray-100 */
+}
+
+html.light .dark\:bg-gray-700 {
+  background-color: rgb(229 231 235) !important;
+  /* gray-200 */
+}
+
+html.light .dark\:text-white {
+  color: rgb(17 24 39) !important;
+  /* gray-900 */
+}
+
+html.light .dark\:text-gray-100 {
+  color: rgb(17 24 39) !important;
+  /* gray-900 */
+}
+
+html.light .dark\:text-gray-300 {
+  color: rgb(75 85 99) !important;
+  /* gray-600 */
+}
+
+html.light .dark\:border-gray-700 {
+  border-color: rgb(209 213 219) !important;
+  /* gray-300 */
+}
+
+html.light .dark\:border-gray-600 {
+  border-color: rgb(229 231 235) !important;
+  /* gray-200 */
+}
+
+/* COMPREHENSIVE OVERRIDE - disable ALL dark mode classes in light mode */
+html.light [class*="dark:"]:not(.dark *) {
+  /* Reset any dark mode styles */
+}
+
+/* Alternative: Use CSS variables approach */
+html {
+  --bg-primary: white;
+  --text-primary: rgb(17 24 39);
+  --bg-secondary: rgb(243 244 246);
+  --text-secondary: rgb(75 85 99);
+  --border-primary: rgb(209 213 219);
+}
+
+html.dark {
+  --bg-primary: rgb(17 24 39);
+  --text-primary: rgb(243 244 246);
+  --bg-secondary: rgb(31 41 55);
+  --text-secondary: rgb(156 163 175);
+  --border-primary: rgb(55 65 81);
+}
+
+.force-bg-primary {
+  background-color: var(--bg-primary) !important;
+}
+
+.force-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.force-bg-secondary {
+  background-color: var(--bg-secondary) !important;
+}
+
+.force-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.force-border-primary {
+  border-color: var(--border-primary) !important;
+}

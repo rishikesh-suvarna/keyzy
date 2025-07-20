@@ -1,34 +1,19 @@
-import { Config } from 'tailwindcss'
+// tailwind.config.js - Minimal approach
+import type { Config } from 'tailwindcss'
 
-export default {
+const config: Config = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: ['class', '.dark'], // Explicit class selector
   theme: {
-    extend: {
-      colors: {
-        background: 'var(--color-background)',
-        foreground: 'var(--color-foreground)',
-        card: 'var(--color-card)',
-        'card-foreground': 'var(--color-card-foreground)',
-        primary: 'var(--color-primary)',
-        'primary-foreground': 'var(--color-primary-foreground)',
-        secondary: 'var(--color-secondary)',
-        'secondary-foreground': 'var(--color-secondary-foreground)',
-        muted: 'var(--color-muted)',
-        'muted-foreground': 'var(--color-muted-foreground)',
-        accent: 'var(--color-accent)',
-        'accent-foreground': 'var(--color-accent-foreground)',
-        border: 'var(--color-border)',
-        input: 'var(--color-input)',
-        ring: 'var(--color-ring)',
-      },
-      backgroundColor: {
-        'gray-750': '#374151',
-      },
-    },
+    extend: {},
   },
   plugins: [],
-} satisfies Config
+}
+
+export default config
