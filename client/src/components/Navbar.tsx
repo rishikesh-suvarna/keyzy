@@ -3,6 +3,8 @@
 import { LogOut, Shield } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/lib/auth";
+import Link from "next/link";
+import Image from "next/image";
 
 
 const Navbar = () => {
@@ -12,25 +14,52 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <div className="p-2 bg-black dark:bg-white rounded-xl mr-3 shadow-lg">
-              <Shield className="h-6 w-6 text-white dark:text-black" />
+            <div className="">
+              <Image
+                src={"/logo-horizontal.png"}
+                alt="Keyzy Logo"
+                width={160}
+                height={54}
+                // className="h-8 w-auto"
+                style={{ objectFit: "contain" }}
+                priority
+              />
             </div>
-            <h1 className="text-xl font-bold text-black dark:text-white">Keyzy</h1>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
-              Welcome, {user?.email}
-            </span>
-            <button
-              onClick={logout}
-              className="flex items-center px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <LogOut className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
+          {
+            user
+              ?
+              <div className="flex items-center space-x-4">
+                <ThemeToggle />
+                <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
+                  Welcome, {user?.email}
+                </span>
+                <button
+                  onClick={logout}
+                  className="flex items-center px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </div>
+              :
+              <div className="flex items-center space-x-6">
+                <ThemeToggle />
+                <Link
+                  href="/auth/login"
+                  className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium"
+                >
+                  Get Started
+                </Link>
+              </div>
+          }
         </div>
       </div>
     </header>

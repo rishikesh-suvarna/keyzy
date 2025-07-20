@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { Shield, Lock, Key, Eye, CheckCircle, Copy, RefreshCw, EyeOff, Settings, Sparkles, Zap, Star } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
+import Navbar from '@/components/Navbar';
 
 interface GeneratePasswordRequest {
   length: number;
@@ -151,7 +152,7 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <header className="relative z-50 backdrop-blur-sm bg-white/90 dark:bg-black/90 border-b border-gray-200 dark:border-gray-800">
+      {/* <header className="relative z-50 backdrop-blur-sm bg-white/90 dark:bg-black/90 border-b border-gray-200 dark:border-gray-800">
         <nav className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
@@ -182,7 +183,8 @@ export default function Home() {
             </div>
           </div>
         </nav>
-      </header>
+      </header> */}
+      <Navbar />
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         {/* Password Generator Section */}
