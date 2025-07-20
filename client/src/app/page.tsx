@@ -48,7 +48,7 @@ export default function Home() {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-              <span className="text-xl font-bold">SecurePass</span>
+              <span className="text-xl font-bold">Keyzy</span>
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
@@ -105,10 +105,10 @@ export default function Home() {
         <div className="py-20">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">
-              Why Choose SecurePass?
+              Why Choose Keyzy?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Built with security and simplicity in mind, SecurePass offers enterprise-grade
+              Built with security and simplicity in mind, Keyzy offers enterprise-grade
               password management for everyone.
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function Home() {
               Ready to Secure Your Passwords?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Join thousands of users who trust SecurePass to keep their digital lives secure.
+              Join thousands of users who trust Keyzy to keep their digital lives secure.
               Get started in minutes with our free account.
             </p>
             <Link
@@ -160,10 +160,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
               <Shield className="h-6 w-6 text-blue-400 dark:text-blue-400 mr-2" />
-              <span className="text-lg font-semibold">SecurePass</span>
+              <span className="text-lg font-semibold">Keyzy</span>
             </div>
             <div className="text-sm text-gray-400 dark:text-gray-500">
-              © 2024 SecurePass. Built with security in mind.
+              © 2024 Keyzy. Built with security in mind.
             </div>
           </div>
         </div>

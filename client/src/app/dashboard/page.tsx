@@ -139,7 +139,7 @@ export default function Dashboard() {
               <div className="p-2 bg-blue-600 dark:bg-blue-600 rounded-xl mr-3 shadow-glow">
                 <Shield className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">SecurePass</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Keyzy</h1>
             </div>
 
             <div className="flex items-center space-x-4">

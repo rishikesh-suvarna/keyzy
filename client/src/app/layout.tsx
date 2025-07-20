@@ -4,10 +4,10 @@ import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata = {
-  title: 'SecurePass - Password Manager',
+  title: 'Keyzy - Password Manager',
   description: 'Secure password manager with military-grade encryption',
   keywords: 'password manager, security, encryption, passwords, secure',
-  authors: [{ name: 'SecurePass Team' }],
+  authors: [{ name: 'Keyzy Team' }],
 }
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="h-full font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <ThemeProvider defaultTheme="system" storageKey="securepass-theme">
+        <ThemeProvider defaultTheme="system" storageKey="keyzy-theme">
           <AuthProvider>
             <div className="min-h-full">
               {children}
