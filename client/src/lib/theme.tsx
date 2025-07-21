@@ -15,7 +15,7 @@ const ThemeProviderContext = createContext<ThemeProviderContextType>({} as Theme
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system',
+  defaultTheme = 'light',
   storageKey = 'theme',
 }: {
   children: React.ReactNode;
