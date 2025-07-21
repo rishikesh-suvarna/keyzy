@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="h-full font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <ThemeProvider defaultTheme="system" storageKey="keyzy-theme">
+        <ThemeProvider defaultTheme="light" storageKey="keyzy-theme">
           <AuthProvider>
             <div className="min-h-full">
               <Analytics />
