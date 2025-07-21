@@ -22,6 +22,7 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system" storageKey="keyzy-theme">
           <AuthProvider>
             <div className="min-h-full">
+              <Analytics />
               {children}
             </div>
             <Toaster
@@ -52,7 +53,6 @@ export default function RootLayout({
             />
           </AuthProvider>
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   )
