@@ -35,7 +35,7 @@ const Navbar = () => {
             user
               ?
               <div className="flex items-center space-x-4">
-                {/* <ThemeToggle /> */}
+                <ThemeToggle />
                 <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                   Welcome, {user?.email}
                 </span>
@@ -49,7 +49,7 @@ const Navbar = () => {
               </div>
               :
               <div className="flex items-center space-x-6">
-                {/* <ThemeToggle /> */}
+                <ThemeToggle />
                 <Link
                   href="/auth/login"
                   className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium"
