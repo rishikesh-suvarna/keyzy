@@ -53,7 +53,7 @@ func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 		SELECT id, user_id, service_name, service_url, username, encrypted_password, notes, created_at, updated_at
 		FROM password_entries 
 		WHERE user_id = $1 
-		ORDER BY service_name ASC
+		ORDER BY created_at ASC
 	`, userID)
 
 	if err != nil {
