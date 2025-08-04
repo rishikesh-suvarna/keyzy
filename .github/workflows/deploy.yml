@@ -3,7 +3,7 @@ name: Deploy Go Backend
 on:
   push:
     branches: [ main ]
-    paths: 
+    paths:
       - 'server/**'
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ jobs:
   deploy:
     name: Deploy to Ubuntu Server
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -30,31 +30,31 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           echo "Starting deployment..."
-          
+
           # Navigate to project directory
           cd /opt/keyzy/server
-          
+
           # Pull latest changes
           echo "Pulling latest code..."
           git pull origin main
-          
+
           # Build the application
           echo "Building application..."
           go mod download
           go build -o keyzy-server main.go
-          
+
           # Make executable
           chmod +x keyzy-server
-          
+
           # Restart the service
           echo "Restarting service..."
           sudo systemctl restart keyzy
-          
+
           # Wait a moment for service to start
           sleep 3
-          
+
           # Check service status
           echo "Checking service status..."
           sudo systemctl is-active keyzy
 
-          echo "Deployment completed successfully!"
+          echo "Deployment completed successfully"
