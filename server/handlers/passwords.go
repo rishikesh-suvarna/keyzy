@@ -12,6 +12,7 @@ import (
 
 	"password-manager/middleware"
 	"password-manager/models"
+	"password-manager/utils"
 )
 
 type PasswordHandler struct {
@@ -151,9 +152,8 @@ func (h *PasswordHandler) CreatePassword(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-
-	if req.ServiceName == "" || req.EncryptedPassword == "" {
-		http.Error(w, "Service name and password are required", http.StatusBadRequest)
+	if err := utils.Validate(&req); err != nil {
+		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -211,6 +211,10 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 	var req models.UpdatePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if err := utils.Validate(&req); err != nil {
+		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

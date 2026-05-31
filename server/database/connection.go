@@ -3,11 +3,19 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
 
 func Connect(databaseURL string) (*sql.DB, error) {
+	// Vaults are encrypted, but the connection still carries auth tokens and
+	// metadata. Warn loudly if the DB link is not using TLS.
+	if strings.Contains(databaseURL, "sslmode=disable") {
+		log.Printf("WARNING: database connection has sslmode=disable — use sslmode=require (or verify-full) in production")
+	}
+
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)

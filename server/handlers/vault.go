@@ -7,6 +7,7 @@ import (
 
 	"password-manager/middleware"
 	"password-manager/models"
+	"password-manager/utils"
 )
 
 type VaultHandler struct {
@@ -79,8 +80,8 @@ func (h *VaultHandler) SetupVault(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if req.KDFSalt == "" || req.WrappedVaultKey == "" {
-		http.Error(w, "kdf_salt and wrapped_vault_key are required", http.StatusBadRequest)
+	if err := utils.Validate(&req); err != nil {
+		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

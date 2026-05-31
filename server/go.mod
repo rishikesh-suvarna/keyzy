@@ -1,12 +1,17 @@
 module password-manager
 
-go 1.21
+go 1.25.0
+
+toolchain go1.25.10
 
 require (
 	firebase.google.com/go/v4 v4.12.0
+	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	golang.org/x/time v0.15.0
 	google.golang.org/api v0.126.0
 )
 
@@ -19,6 +24,9 @@ require (
 	cloud.google.com/go/longrunning v0.4.1 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -26,15 +34,14 @@ require (
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.10.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/appengine/v2 v2.0.2 // indirect

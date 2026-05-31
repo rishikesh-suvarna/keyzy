@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"password-manager/config"
 	"password-manager/database"
@@ -10,6 +11,7 @@ import (
 	"password-manager/middleware"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -47,10 +49,17 @@ func main() {
 	passwordHandler := handlers.NewPasswordHandler(db)
 	vaultHandler := handlers.NewVaultHandler(db)
 
+	// Per-IP rate limiter: 10 req/s, burst 20. Generous for normal use, but
+	// blunts brute-force and abuse.
+	apiLimiter := middleware.NewRateLimiter(rate.Limit(10), 20)
+
 	// Setup router
 	router := mux.NewRouter()
 
+	// Global middleware: security headers, CORS, and a 1 MiB request body cap.
+	router.Use(middleware.SecurityHeaders)
 	router.Use(middleware.CORS)
+	router.Use(middleware.MaxBodyBytes(1 << 20))
 
 	// Public routes
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +71,8 @@ func main() {
 	// Protected routes
 	api := router.PathPrefix("/api").Subrouter()
 
-	// Apply auth middleware to API routes
+	// Rate limit then authenticate every API route.
+	api.Use(apiLimiter.Middleware)
 	api.Use(middleware.AuthMiddleware)
 
 	// Register requires a verified token; identity comes from the token, not the body
@@ -87,7 +97,17 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on port %s", port)
+	// Explicit timeouts protect against slow-client (e.g. Slowloris) attacks and
+	// leaked connections.
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Printf("Server starting on port %s", port)
+	log.Fatal(srv.ListenAndServe())
 }
