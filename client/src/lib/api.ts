@@ -39,42 +39,50 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Types for API responses (same as before)
+// A password entry as stored/returned by the server: service_name is a
+// plaintext label, every credential field is an opaque "v1:..." ciphertext
+// envelope that only the browser (with the unlocked vault) can decrypt.
 export interface PasswordEntry {
   id: string;
   user_id: string;
   service_name: string;
-  service_url?: string;
-  username?: string;
-  password: string;
-  notes?: string;
+  encrypted_password: string;
+  encrypted_username?: string;
+  encrypted_url?: string;
+  encrypted_notes?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreatePasswordRequest {
   service_name: string;
-  service_url?: string;
-  username?: string;
-  password: string;
-  notes?: string;
+  encrypted_password: string;
+  encrypted_username?: string;
+  encrypted_url?: string;
+  encrypted_notes?: string;
 }
 
 export interface UpdatePasswordRequest {
   service_name?: string;
-  service_url?: string;
-  username?: string;
-  password?: string;
-  notes?: string;
+  encrypted_password?: string;
+  encrypted_username?: string;
+  encrypted_url?: string;
+  encrypted_notes?: string;
 }
 
-export interface GeneratePasswordRequest {
-  length: number;
-  include_upper: boolean;
-  include_lower: boolean;
-  include_numbers: boolean;
-  include_symbols: boolean;
-  exclude_similar: boolean;
+// Zero-knowledge key material. The salt is non-secret; the wrapped vault key is
+// itself encrypted under the master-password-derived key.
+export interface VaultInfo {
+  initialized: boolean;
+  kdf_salt?: string;
+  wrapped_vault_key?: string;
+  master_password_hint?: string;
+}
+
+export interface SetupVaultRequest {
+  kdf_salt: string;
+  wrapped_vault_key: string;
+  master_password_hint?: string;
 }
 
 export interface ApiResponse<T> {
@@ -128,12 +136,23 @@ export const passwordApi = {
     });
   },
 
-  // Generate password
-  generatePassword: async (options: GeneratePasswordRequest, token: string): Promise<string> => {
-    const response = await apiClient.post<ApiResponse<{ password: string }>>('/generate-password', options, {
+};
+
+// Vault key-material API (zero-knowledge)
+export const vaultApi = {
+  // Fetch the current user's salt + wrapped vault key
+  getVault: async (token: string): Promise<VaultInfo> => {
+    const response = await apiClient.get<ApiResponse<VaultInfo>>('/vault', {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data.data!.password;
+    return response.data.data!;
+  },
+
+  // Initialize the vault the first time a master password is set
+  setupVault: async (data: SetupVaultRequest, token: string): Promise<void> => {
+    await apiClient.post('/vault', data, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
   },
 };
 

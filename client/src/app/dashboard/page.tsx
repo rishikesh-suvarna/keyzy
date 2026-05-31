@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { passwordApi, PasswordEntry } from '@/lib/api';
+import { passwordApi } from '@/lib/api';
+import { useVault, DecryptedEntry } from '@/lib/vault';
 import { useRouter } from 'next/navigation';
 import {
   Plus,
@@ -17,6 +18,7 @@ import {
   Globe,
   User,
   FileText,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PasswordModal from '@/components/PasswordModal';
@@ -25,12 +27,13 @@ import Navbar from '@/components/Navbar';
 
 export default function Dashboard() {
   const { user, getIdToken } = useAuth();
+  const { decryptEntry, lock } = useVault();
   const router = useRouter();
-  const [passwords, setPasswords] = useState<PasswordEntry[]>([]);
+  const [passwords, setPasswords] = useState<DecryptedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPasswords, setShowPasswords] = useState<{ [key: string]: boolean }>({});
-  const [selectedPassword, setSelectedPassword] = useState<PasswordEntry | null>(null);
+  const [selectedPassword, setSelectedPassword] = useState<DecryptedEntry | null>(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -49,7 +52,9 @@ export default function Dashboard() {
       const token = await getIdToken();
       if (token) {
         const data = await passwordApi.getPasswords(token);
-        setPasswords(data);
+        // Decrypt every entry locally with the in-memory vault key.
+        const decrypted = await Promise.all(data.map((entry) => decryptEntry(entry)));
+        setPasswords(decrypted);
       }
     } catch (error) {
       toast.error('Failed to load passwords');
@@ -86,7 +91,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleEditPassword = (password: PasswordEntry) => {
+  const handleEditPassword = (password: DecryptedEntry) => {
     setSelectedPassword(password);
     setIsEditing(true);
     setGeneratedPasswordToSave('');
@@ -125,7 +130,7 @@ export default function Dashboard() {
     (password.service_url && password.service_url.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handlePasswordSaved = (password: PasswordEntry, isNew: boolean) => {
+  const handlePasswordSaved = (password: DecryptedEntry, isNew: boolean) => {
     if (isNew) {
       setPasswords([...passwords, password]);
     } else {
@@ -158,6 +163,14 @@ export default function Dashboard() {
           </div>
 
           <div className="flex space-x-3 animate-slide-up">
+            <button
+              onClick={() => lock()}
+              className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-800 text-black dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-200 shadow-lg"
+              title="Lock vault"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Lock
+            </button>
             <button
               onClick={handleGeneratePassword}
               className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-800 text-black dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-200 shadow-lg"

@@ -14,46 +14,52 @@ type User struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// PasswordEntry holds only client-side ciphertext. The server never sees or
+// stores any plaintext credential. service_name is kept as a plaintext label
+// for listing/search; everything sensitive is an opaque "v1:..." envelope
+// produced and consumed by the browser.
 type PasswordEntry struct {
 	ID                uuid.UUID `json:"id"`
 	UserID            uuid.UUID `json:"user_id"`
 	ServiceName       string    `json:"service_name"`
-	ServiceURL        *string   `json:"service_url,omitempty"`
-	Username          *string   `json:"username,omitempty"`
-	EncryptedPassword string    `json:"-"`                  // Never send encrypted password to client
-	Password          string    `json:"password,omitempty"` // Only for responses after decryption
-	Notes             *string   `json:"notes,omitempty"`
+	EncryptedPassword string    `json:"encrypted_password"`
+	EncryptedUsername *string   `json:"encrypted_username,omitempty"`
+	EncryptedURL      *string   `json:"encrypted_url,omitempty"`
+	EncryptedNotes    *string   `json:"encrypted_notes,omitempty"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 type CreatePasswordRequest struct {
-	ServiceName string  `json:"service_name" validate:"required,min=1,max=255"`
-	ServiceURL  *string `json:"service_url,omitempty" validate:"omitempty,url,max=500"`
-	Username    *string `json:"username,omitempty" validate:"omitempty,max=255"`
-	Password    string  `json:"password" validate:"required,min=1"`
-	Notes       *string `json:"notes,omitempty"`
+	ServiceName       string  `json:"service_name" validate:"required,min=1,max=255"`
+	EncryptedPassword string  `json:"encrypted_password" validate:"required,min=1"`
+	EncryptedUsername *string `json:"encrypted_username,omitempty"`
+	EncryptedURL      *string `json:"encrypted_url,omitempty"`
+	EncryptedNotes    *string `json:"encrypted_notes,omitempty"`
 }
 
 type UpdatePasswordRequest struct {
-	ServiceName string  `json:"service_name,omitempty" validate:"omitempty,min=1,max=255"`
-	ServiceURL  *string `json:"service_url,omitempty" validate:"omitempty,url,max=500"`
-	Username    *string `json:"username,omitempty" validate:"omitempty,max=255"`
-	Password    string  `json:"password,omitempty" validate:"omitempty,min=1"`
-	Notes       *string `json:"notes,omitempty"`
+	ServiceName       string  `json:"service_name,omitempty" validate:"omitempty,min=1,max=255"`
+	EncryptedPassword string  `json:"encrypted_password,omitempty"`
+	EncryptedUsername *string `json:"encrypted_username,omitempty"`
+	EncryptedURL      *string `json:"encrypted_url,omitempty"`
+	EncryptedNotes    *string `json:"encrypted_notes,omitempty"`
 }
 
-type GeneratePasswordRequest struct {
-	Length         int  `json:"length" validate:"min=8,max=128"`
-	IncludeUpper   bool `json:"include_upper"`
-	IncludeLower   bool `json:"include_lower"`
-	IncludeNumbers bool `json:"include_numbers"`
-	IncludeSymbols bool `json:"include_symbols"`
-	ExcludeSimilar bool `json:"exclude_similar"`
+// VaultInfo describes a user's zero-knowledge key material. All values are
+// non-secret (the salt) or already encrypted (the wrapped vault key); they are
+// useless without the user's master password.
+type VaultInfo struct {
+	Initialized        bool    `json:"initialized"`
+	KDFSalt            *string `json:"kdf_salt,omitempty"`
+	WrappedVaultKey    *string `json:"wrapped_vault_key,omitempty"`
+	MasterPasswordHint *string `json:"master_password_hint,omitempty"`
 }
 
-type GeneratePasswordResponse struct {
-	Password string `json:"password"`
+type SetupVaultRequest struct {
+	KDFSalt            string  `json:"kdf_salt" validate:"required"`
+	WrappedVaultKey    string  `json:"wrapped_vault_key" validate:"required"`
+	MasterPasswordHint *string `json:"master_password_hint,omitempty"`
 }
 
 type ErrorResponse struct {

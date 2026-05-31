@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { Shield, Lock, Key, Eye, CheckCircle, Copy, RefreshCw, EyeOff, Settings, Sparkles, Zap, Star } from 'lucide-react';
+import { generatePassword as securelyGeneratePassword } from '@/lib/crypto';
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
@@ -53,21 +54,15 @@ export default function Home() {
     setLoading(true);
 
     try {
-      let charset = '';
-      if (options.include_upper) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      if (options.include_lower) charset += 'abcdefghijklmnopqrstuvwxyz';
-      if (options.include_numbers) charset += '0123456789';
-      if (options.include_symbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-      // Remove similar characters if requested
-      if (options.exclude_similar) {
-        charset = charset.replace(/[il1Lo0O]/g, '');
-      }
-
-      let password = '';
-      for (let i = 0; i < options.length; i++) {
-        password += charset.charAt(Math.floor(Math.random() * charset.length));
-      }
+      // Cryptographically secure generation (crypto.getRandomValues).
+      const password = securelyGeneratePassword({
+        length: options.length,
+        includeUpper: options.include_upper,
+        includeLower: options.include_lower,
+        includeNumbers: options.include_numbers,
+        includeSymbols: options.include_symbols,
+        excludeSimilar: options.exclude_similar,
+      });
 
       setGeneratedPassword(password);
       setShowPassword(true);

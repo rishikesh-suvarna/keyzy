@@ -10,7 +10,6 @@ import (
 
 type Config struct {
 	DatabaseURL                  string
-	EncryptionKey                string
 	FirebaseProject              string
 	GoogleApplicationCredentials string
 	Port                         string
@@ -25,19 +24,17 @@ func Load() *Config {
 		log.Printf("Using environment variables...")
 	}
 
+	// Note: there is no server-side encryption key. Encryption is performed
+	// client-side (zero-knowledge); the server only ever stores ciphertext.
+
 	config := &Config{
 		DatabaseURL:                  getEnv("DATABASE_URL", ""),
-		EncryptionKey:                strings.TrimSpace(getEnv("ENCRYPTION_KEY", "")),
 		FirebaseProject:              getEnv("FIREBASE_PROJECT_ID", ""),
 		GoogleApplicationCredentials: getEnv("GOOGLE_APPLICATION_CREDENTIALS", ""),
 		Port:                         getEnv("PORT", "8080"),
 		AllowedOrigins:               parseOrigins(getEnv("ALLOWED_ORIGINS", "")),
 		AllowInsecureDevAuth:         getEnv("ALLOW_INSECURE_DEV_AUTH", "") == "true",
 	}
-
-	// Note: the encryption key is intentionally NOT padded, truncated, or
-	// sanitized here. A weak or malformed key must be rejected, never quietly
-	// "fixed" — that is enforced when the crypto service is constructed.
 
 	if config.FirebaseProject == "your-firebase-project-id" {
 		log.Printf("Warning: Using default Firebase project ID. Set FIREBASE_PROJECT_ID environment variable.")

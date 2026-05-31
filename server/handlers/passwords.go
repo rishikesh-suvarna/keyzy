@@ -12,29 +12,19 @@ import (
 
 	"password-manager/middleware"
 	"password-manager/models"
-	"password-manager/utils"
 )
 
 type PasswordHandler struct {
-	db            *sql.DB
-	cryptoService *utils.CryptoService
-	generator     *utils.PasswordGenerator
+	db *sql.DB
 }
 
-func NewPasswordHandler(db *sql.DB, encryptionKey string) (*PasswordHandler, error) {
-	cryptoService, err := utils.NewCryptoService(encryptionKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PasswordHandler{
-		db:            db,
-		cryptoService: cryptoService,
-		generator:     utils.NewPasswordGenerator(),
-	}, nil
+func NewPasswordHandler(db *sql.DB) *PasswordHandler {
+	return &PasswordHandler{db: db}
 }
 
-// GetPasswords returns all password entries for the authenticated user
+// GetPasswords returns all password entries for the authenticated user. Every
+// credential field is returned exactly as stored — an opaque client-side
+// ciphertext envelope. The server cannot read them.
 func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 	firebaseUID := middleware.GetFirebaseUID(r)
 	if firebaseUID == "" {
@@ -42,7 +32,6 @@ func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user ID from firebase UID
 	userID, err := h.getUserID(firebaseUID)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -50,9 +39,9 @@ func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.db.Query(`
-		SELECT id, user_id, service_name, service_url, username, encrypted_password, notes, created_at, updated_at
-		FROM password_entries 
-		WHERE user_id = $1 
+		SELECT id, user_id, service_name, encrypted_password, encrypted_username, encrypted_url, encrypted_notes, created_at, updated_at
+		FROM password_entries
+		WHERE user_id = $1
 		ORDER BY created_at ASC
 	`, userID)
 
@@ -62,30 +51,22 @@ func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var passwords []models.PasswordEntry
+	passwords := []models.PasswordEntry{}
 	for rows.Next() {
 		var entry models.PasswordEntry
-		err := rows.Scan(
+		if err := rows.Scan(
 			&entry.ID,
 			&entry.UserID,
 			&entry.ServiceName,
-			&entry.ServiceURL,
-			&entry.Username,
 			&entry.EncryptedPassword,
-			&entry.Notes,
+			&entry.EncryptedUsername,
+			&entry.EncryptedURL,
+			&entry.EncryptedNotes,
 			&entry.CreatedAt,
 			&entry.UpdatedAt,
-		)
-		if err != nil {
+		); err != nil {
 			continue
 		}
-
-		// Decrypt password
-		if decrypted, err := h.cryptoService.Decrypt(entry.EncryptedPassword); err == nil {
-			entry.Password = decrypted
-		}
-		entry.EncryptedPassword = "" // Don't send encrypted version
-
 		passwords = append(passwords, entry)
 	}
 
@@ -96,7 +77,7 @@ func (h *PasswordHandler) GetPasswords(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetPassword returns a single password entry
+// GetPassword returns a single password entry (ciphertext only).
 func (h *PasswordHandler) GetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	passwordID, err := uuid.Parse(vars["id"])
@@ -119,17 +100,17 @@ func (h *PasswordHandler) GetPassword(w http.ResponseWriter, r *http.Request) {
 
 	var entry models.PasswordEntry
 	err = h.db.QueryRow(`
-		SELECT id, user_id, service_name, service_url, username, encrypted_password, notes, created_at, updated_at
-		FROM password_entries 
+		SELECT id, user_id, service_name, encrypted_password, encrypted_username, encrypted_url, encrypted_notes, created_at, updated_at
+		FROM password_entries
 		WHERE id = $1 AND user_id = $2
 	`, passwordID, userID).Scan(
 		&entry.ID,
 		&entry.UserID,
 		&entry.ServiceName,
-		&entry.ServiceURL,
-		&entry.Username,
 		&entry.EncryptedPassword,
-		&entry.Notes,
+		&entry.EncryptedUsername,
+		&entry.EncryptedURL,
+		&entry.EncryptedNotes,
 		&entry.CreatedAt,
 		&entry.UpdatedAt,
 	)
@@ -138,17 +119,10 @@ func (h *PasswordHandler) GetPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Password not found", http.StatusNotFound)
 		return
 	}
-
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
-	// Decrypt password
-	if decrypted, err := h.cryptoService.Decrypt(entry.EncryptedPassword); err == nil {
-		entry.Password = decrypted
-	}
-	entry.EncryptedPassword = ""
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.SuccessResponse{
@@ -157,7 +131,8 @@ func (h *PasswordHandler) GetPassword(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CreatePassword creates a new password entry
+// CreatePassword stores a new entry. The body already contains client-side
+// ciphertext; the server persists it verbatim.
 func (h *PasswordHandler) CreatePassword(w http.ResponseWriter, r *http.Request) {
 	firebaseUID := middleware.GetFirebaseUID(r)
 	if firebaseUID == "" {
@@ -177,32 +152,24 @@ func (h *PasswordHandler) CreatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validate required fields
-	if req.ServiceName == "" || req.Password == "" {
+	if req.ServiceName == "" || req.EncryptedPassword == "" {
 		http.Error(w, "Service name and password are required", http.StatusBadRequest)
-		return
-	}
-
-	// Encrypt password
-	encryptedPassword, err := h.cryptoService.Encrypt(req.Password)
-	if err != nil {
-		http.Error(w, "Failed to encrypt password", http.StatusInternalServerError)
 		return
 	}
 
 	var entry models.PasswordEntry
 	err = h.db.QueryRow(`
-		INSERT INTO password_entries (user_id, service_name, service_url, username, encrypted_password, notes)
+		INSERT INTO password_entries (user_id, service_name, encrypted_password, encrypted_username, encrypted_url, encrypted_notes)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, user_id, service_name, service_url, username, encrypted_password, notes, created_at, updated_at
-	`, userID, req.ServiceName, req.ServiceURL, req.Username, encryptedPassword, req.Notes).Scan(
+		RETURNING id, user_id, service_name, encrypted_password, encrypted_username, encrypted_url, encrypted_notes, created_at, updated_at
+	`, userID, req.ServiceName, req.EncryptedPassword, req.EncryptedUsername, req.EncryptedURL, req.EncryptedNotes).Scan(
 		&entry.ID,
 		&entry.UserID,
 		&entry.ServiceName,
-		&entry.ServiceURL,
-		&entry.Username,
 		&entry.EncryptedPassword,
-		&entry.Notes,
+		&entry.EncryptedUsername,
+		&entry.EncryptedURL,
+		&entry.EncryptedNotes,
 		&entry.CreatedAt,
 		&entry.UpdatedAt,
 	)
@@ -212,10 +179,6 @@ func (h *PasswordHandler) CreatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Return decrypted password in response
-	entry.Password = req.Password
-	entry.EncryptedPassword = ""
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(models.SuccessResponse{
@@ -224,7 +187,7 @@ func (h *PasswordHandler) CreatePassword(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// UpdatePassword updates an existing password entry
+// UpdatePassword updates an existing entry. Only provided fields are changed.
 func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	passwordID, err := uuid.Parse(vars["id"])
@@ -251,18 +214,17 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Check if password entry exists and belongs to user
+	// Check the entry exists and belongs to the user
 	var exists bool
 	err = h.db.QueryRow(`
 		SELECT EXISTS(SELECT 1 FROM password_entries WHERE id = $1 AND user_id = $2)
 	`, passwordID, userID).Scan(&exists)
-
 	if err != nil || !exists {
 		http.Error(w, "Password not found", http.StatusNotFound)
 		return
 	}
 
-	// Build dynamic update query
+	// Build a dynamic update with parameterized placeholders only.
 	updateFields := []string{}
 	args := []interface{}{}
 	argCount := 1
@@ -272,33 +234,24 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 		args = append(args, req.ServiceName)
 		argCount++
 	}
-
-	if req.ServiceURL != nil {
-		updateFields = append(updateFields, "service_url = $"+strconv.Itoa(argCount))
-		args = append(args, req.ServiceURL)
-		argCount++
-	}
-
-	if req.Username != nil {
-		updateFields = append(updateFields, "username = $"+strconv.Itoa(argCount))
-		args = append(args, req.Username)
-		argCount++
-	}
-
-	if req.Password != "" {
-		encryptedPassword, err := h.cryptoService.Encrypt(req.Password)
-		if err != nil {
-			http.Error(w, "Failed to encrypt password", http.StatusInternalServerError)
-			return
-		}
+	if req.EncryptedPassword != "" {
 		updateFields = append(updateFields, "encrypted_password = $"+strconv.Itoa(argCount))
-		args = append(args, encryptedPassword)
+		args = append(args, req.EncryptedPassword)
 		argCount++
 	}
-
-	if req.Notes != nil {
-		updateFields = append(updateFields, "notes = $"+strconv.Itoa(argCount))
-		args = append(args, req.Notes)
+	if req.EncryptedUsername != nil {
+		updateFields = append(updateFields, "encrypted_username = $"+strconv.Itoa(argCount))
+		args = append(args, req.EncryptedUsername)
+		argCount++
+	}
+	if req.EncryptedURL != nil {
+		updateFields = append(updateFields, "encrypted_url = $"+strconv.Itoa(argCount))
+		args = append(args, req.EncryptedURL)
+		argCount++
+	}
+	if req.EncryptedNotes != nil {
+		updateFields = append(updateFields, "encrypted_notes = $"+strconv.Itoa(argCount))
+		args = append(args, req.EncryptedNotes)
 		argCount++
 	}
 
@@ -307,17 +260,14 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Add updated_at field
 	updateFields = append(updateFields, "updated_at = NOW()")
-
-	// Add WHERE clause parameters
 	args = append(args, passwordID, userID)
 
 	query := `
-		UPDATE password_entries 
+		UPDATE password_entries
 		SET ` + strings.Join(updateFields, ", ") + `
 		WHERE id = $` + strconv.Itoa(argCount) + ` AND user_id = $` + strconv.Itoa(argCount+1) + `
-		RETURNING id, user_id, service_name, service_url, username, encrypted_password, notes, created_at, updated_at
+		RETURNING id, user_id, service_name, encrypted_password, encrypted_username, encrypted_url, encrypted_notes, created_at, updated_at
 	`
 
 	var entry models.PasswordEntry
@@ -325,10 +275,10 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 		&entry.ID,
 		&entry.UserID,
 		&entry.ServiceName,
-		&entry.ServiceURL,
-		&entry.Username,
 		&entry.EncryptedPassword,
-		&entry.Notes,
+		&entry.EncryptedUsername,
+		&entry.EncryptedURL,
+		&entry.EncryptedNotes,
 		&entry.CreatedAt,
 		&entry.UpdatedAt,
 	)
@@ -338,12 +288,6 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Decrypt password for response
-	if decrypted, err := h.cryptoService.Decrypt(entry.EncryptedPassword); err == nil {
-		entry.Password = decrypted
-	}
-	entry.EncryptedPassword = ""
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.SuccessResponse{
 		Message: "Password updated successfully",
@@ -351,7 +295,7 @@ func (h *PasswordHandler) UpdatePassword(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// DeletePassword deletes a password entry
+// DeletePassword deletes a password entry.
 func (h *PasswordHandler) DeletePassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	passwordID, err := uuid.Parse(vars["id"])
@@ -373,7 +317,7 @@ func (h *PasswordHandler) DeletePassword(w http.ResponseWriter, r *http.Request)
 	}
 
 	result, err := h.db.Exec(`
-		DELETE FROM password_entries 
+		DELETE FROM password_entries
 		WHERE id = $1 AND user_id = $2
 	`, passwordID, userID)
 
@@ -391,45 +335,6 @@ func (h *PasswordHandler) DeletePassword(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.SuccessResponse{
 		Message: "Password deleted successfully",
-	})
-}
-
-// GeneratePassword generates a new password based on criteria
-func (h *PasswordHandler) GeneratePassword(w http.ResponseWriter, r *http.Request) {
-	var req models.GeneratePasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Set defaults if no options specified
-	if req.Length == 0 {
-		req.Length = 12
-	}
-	if !req.IncludeUpper && !req.IncludeLower && !req.IncludeNumbers && !req.IncludeSymbols {
-		req.IncludeUpper = true
-		req.IncludeLower = true
-		req.IncludeNumbers = true
-	}
-
-	password, err := h.generator.Generate(
-		req.Length,
-		req.IncludeUpper,
-		req.IncludeLower,
-		req.IncludeNumbers,
-		req.IncludeSymbols,
-		req.ExcludeSimilar,
-	)
-
-	if err != nil {
-		http.Error(w, "Failed to generate password", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(models.SuccessResponse{
-		Message: "Password generated successfully",
-		Data:    models.GeneratePasswordResponse{Password: password},
 	})
 }
 

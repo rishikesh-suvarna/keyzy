@@ -1,15 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { passwordApi, PasswordEntry, CreatePasswordRequest, UpdatePasswordRequest, GeneratePasswordRequest } from '@/lib/api';
+import { passwordApi } from '@/lib/api';
+import { useVault, DecryptedEntry } from '@/lib/vault';
+import { generatePassword as securelyGeneratePassword } from '@/lib/crypto';
 import { X, Eye, EyeOff, Globe, User, Key, FileText, Save, RefreshCw, Settings, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+interface GenerateOptions {
+  length: number;
+  include_upper: boolean;
+  include_lower: boolean;
+  include_numbers: boolean;
+  include_symbols: boolean;
+  exclude_similar: boolean;
+}
+
 interface PasswordModalProps {
-  password?: PasswordEntry | null;
+  password?: DecryptedEntry | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (password: PasswordEntry, isNew: boolean) => void;
+  onSave: (password: DecryptedEntry, isNew: boolean) => void;
   isEditing: boolean;
   initialGeneratedPassword?: string;
 }
@@ -23,6 +34,7 @@ export default function PasswordModal({
   initialGeneratedPassword,
 }: PasswordModalProps) {
   const { getIdToken } = useAuth();
+  const { encryptForCreate, encryptForUpdate, decryptEntry } = useVault();
   const [formData, setFormData] = useState({
     service_name: '',
     service_url: '',
@@ -35,7 +47,7 @@ export default function PasswordModal({
   const [showGenerator, setShowGenerator] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [generatorLoading, setGeneratorLoading] = useState(false);
-  const [options, setOptions] = useState<GeneratePasswordRequest>({
+  const [options, setOptions] = useState<GenerateOptions>({
     length: 16,
     include_upper: true,
     include_lower: true,
@@ -77,21 +89,15 @@ export default function PasswordModal({
 
     setGeneratorLoading(true);
     try {
-      // Client-side generation for better UX
-      let charset = '';
-      if (options.include_upper) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      if (options.include_lower) charset += 'abcdefghijklmnopqrstuvwxyz';
-      if (options.include_numbers) charset += '0123456789';
-      if (options.include_symbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-      if (options.exclude_similar) {
-        charset = charset.replace(/[il1Lo0O]/g, '');
-      }
-
-      let newPassword = '';
-      for (let i = 0; i < options.length; i++) {
-        newPassword += charset.charAt(Math.floor(Math.random() * charset.length));
-      }
+      // Cryptographically secure client-side generation.
+      const newPassword = securelyGeneratePassword({
+        length: options.length,
+        includeUpper: options.include_upper,
+        includeLower: options.include_lower,
+        includeNumbers: options.include_numbers,
+        includeSymbols: options.include_symbols,
+        excludeSimilar: options.exclude_similar,
+      });
 
       setGeneratedPassword(newPassword);
       toast.success('Password generated successfully!');
@@ -138,43 +144,30 @@ export default function PasswordModal({
         return;
       }
 
-      let savedPassword: PasswordEntry;
+      // Encrypt every credential field locally before it leaves the browser.
+      const plainInput = {
+        service_name: formData.service_name,
+        password: formData.password,
+        username: formData.username,
+        service_url: formData.service_url,
+        notes: formData.notes,
+      };
+
+      let savedPassword;
 
       if (isEditing && password) {
-        const updateData: UpdatePasswordRequest = {};
-
-        if (formData.service_name !== password.service_name) {
-          updateData.service_name = formData.service_name;
-        }
-        if (formData.service_url !== (password.service_url || '')) {
-          updateData.service_url = formData.service_url || undefined;
-        }
-        if (formData.username !== (password.username || '')) {
-          updateData.username = formData.username || undefined;
-        }
-        if (formData.password !== password.password) {
-          updateData.password = formData.password;
-        }
-        if (formData.notes !== (password.notes || '')) {
-          updateData.notes = formData.notes || undefined;
-        }
-
+        const updateData = await encryptForUpdate(plainInput);
         savedPassword = await passwordApi.updatePassword(password.id, updateData, token);
         toast.success('Password updated successfully');
       } else {
-        const createData: CreatePasswordRequest = {
-          service_name: formData.service_name,
-          service_url: formData.service_url || undefined,
-          username: formData.username || undefined,
-          password: formData.password,
-          notes: formData.notes || undefined,
-        };
-
+        const createData = await encryptForCreate(plainInput);
         savedPassword = await passwordApi.createPassword(createData, token);
         toast.success('Password created successfully');
       }
 
-      onSave(savedPassword, !isEditing);
+      // Decrypt the server's ciphertext response back into a view model.
+      const decrypted = await decryptEntry(savedPassword);
+      onSave(decrypted, !isEditing);
     } catch (error: any) {
       console.error('Error saving password:', error);
       toast.error(error.response?.data?.error || 'Failed to save password');
@@ -190,7 +183,7 @@ export default function PasswordModal({
     }));
   };
 
-  const handleOptionChange = (key: keyof GeneratePasswordRequest, value: boolean | number) => {
+  const handleOptionChange = (key: keyof GenerateOptions, value: boolean | number) => {
     setOptions(prev => ({
       ...prev,
       [key]: value
@@ -509,8 +502,8 @@ export default function PasswordModal({
                     <input
                       id={option.key}
                       type="checkbox"
-                      checked={options[option.key as keyof GeneratePasswordRequest] as boolean}
-                      onChange={(e) => handleOptionChange(option.key as keyof GeneratePasswordRequest, e.target.checked)}
+                      checked={options[option.key as keyof GenerateOptions] as boolean}
+                      onChange={(e) => handleOptionChange(option.key as keyof GenerateOptions, e.target.checked)}
                       className="h-4 w-4 text-black dark:text-white focus:ring-gray-500 border-gray-300 dark:border-gray-600 rounded"
                     />
                     <label htmlFor={option.key} className="ml-2 text-sm text-gray-700 dark:text-gray-300">

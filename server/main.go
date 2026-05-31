@@ -44,10 +44,8 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db)
-	passwordHandler, err := handlers.NewPasswordHandler(db, cfg.EncryptionKey)
-	if err != nil {
-		log.Fatalf("Failed to initialize password handler: %v", err)
-	}
+	passwordHandler := handlers.NewPasswordHandler(db)
+	vaultHandler := handlers.NewVaultHandler(db)
 
 	// Setup router
 	router := mux.NewRouter()
@@ -73,15 +71,16 @@ func main() {
 	// User routes
 	api.HandleFunc("/user/profile", authHandler.GetProfile).Methods("GET", "OPTIONS")
 
+	// Vault key material (zero-knowledge): salt + wrapped vault key
+	api.HandleFunc("/vault", vaultHandler.GetVault).Methods("GET", "OPTIONS")
+	api.HandleFunc("/vault", vaultHandler.SetupVault).Methods("POST", "OPTIONS")
+
 	// Password routes
 	api.HandleFunc("/passwords", passwordHandler.GetPasswords).Methods("GET", "OPTIONS")
 	api.HandleFunc("/passwords", passwordHandler.CreatePassword).Methods("POST", "OPTIONS")
 	api.HandleFunc("/passwords/{id}", passwordHandler.GetPassword).Methods("GET", "OPTIONS")
 	api.HandleFunc("/passwords/{id}", passwordHandler.UpdatePassword).Methods("PUT", "OPTIONS")
 	api.HandleFunc("/passwords/{id}", passwordHandler.DeletePassword).Methods("DELETE", "OPTIONS")
-
-	// Password generation route
-	api.HandleFunc("/generate-password", passwordHandler.GeneratePassword).Methods("POST", "OPTIONS")
 
 	port := cfg.Port
 	if port == "" {

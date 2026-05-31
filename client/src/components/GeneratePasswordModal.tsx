@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { X, Copy, RefreshCw, Settings, Save } from 'lucide-react';
+import { generatePassword as securelyGeneratePassword } from '@/lib/crypto';
 import toast from 'react-hot-toast';
 
 interface GeneratePasswordModalProps {
@@ -33,21 +34,15 @@ export default function GeneratePasswordModal({
 
     setLoading(true);
     try {
-      // Client-side generation
-      let charset = '';
-      if (options.include_upper) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      if (options.include_lower) charset += 'abcdefghijklmnopqrstuvwxyz';
-      if (options.include_numbers) charset += '0123456789';
-      if (options.include_symbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-      if (options.exclude_similar) {
-        charset = charset.replace(/[il1Lo0O]/g, '');
-      }
-
-      let password = '';
-      for (let i = 0; i < options.length; i++) {
-        password += charset.charAt(Math.floor(Math.random() * charset.length));
-      }
+      // Cryptographically secure generation (crypto.getRandomValues).
+      const password = securelyGeneratePassword({
+        length: options.length,
+        includeUpper: options.include_upper,
+        includeLower: options.include_lower,
+        includeNumbers: options.include_numbers,
+        includeSymbols: options.include_symbols,
+        excludeSimilar: options.exclude_similar,
+      });
 
       setGeneratedPassword(password);
       toast.success('Password generated successfully!');

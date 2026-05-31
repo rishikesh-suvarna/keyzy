@@ -1,4 +1,6 @@
 import ProtectedRoute from '@/components/ProtectedRoute'
+import VaultGate from '@/components/VaultGate'
+import { VaultProvider } from '@/lib/vault'
 
 export default function DashboardLayout({
   children,
@@ -7,7 +9,11 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      {children}
+      <VaultProvider>
+        <VaultGate>
+          {children}
+        </VaultGate>
+      </VaultProvider>
     </ProtectedRoute>
   )
 }
