@@ -3,11 +3,12 @@
 
 # Keyzy - Secure Password Manager
 
-A modern, full-stack password manager built with Next.js and Go, featuring military-grade encryption and a beautiful black & white design.
+A modern, full-stack password manager built with Next.js and Go, featuring
+zero-knowledge, client-side encryption and a beautiful black & white design.
 
 ## Features
 
-- Military-Grade Security: AES-256 encryption for all stored passwords
+- Zero-Knowledge Security: passwords are encrypted/decrypted in your browser with a key derived from your master password — the server only ever stores ciphertext. See [SECURITY.md](SECURITY.md).
 - Smart Password Generation: Customizable password generator with strength indicators
 - Dark/Light Mode: Beautiful black & white theme with system preference detection
 - Responsive Design: Works seamlessly on desktop, tablet, and mobile
@@ -29,8 +30,13 @@ A modern, full-stack password manager built with Next.js and Go, featuring milit
 - Go - High-performance backend API
 - PostgreSQL - Reliable database with raw SQL queries
 - JWT Tokens - Secure authentication via Firebase
-- AES-256 Encryption - Password encryption at rest
+- Ciphertext-only storage - the server holds no encryption keys and cannot read vaults
 - CORS Support - Cross-origin resource sharing
+
+### Encryption (client-side)
+- Argon2id master-password key derivation (`hash-wasm`)
+- AES-256-GCM vault encryption via the Web Crypto API
+- See [SECURITY.md](SECURITY.md) for the full model
 
 ## Quick Start
 
@@ -78,15 +84,13 @@ cp .env.example .env
 
 # Configure your .env file:
 DATABASE_URL=postgres://user:password@localhost/keyzy?sslmode=disable
-ENCRYPTION_KEY=your_encryption_key
 FIREBASE_PROJECT_ID=your_project_id
 GOOGLE_APPLICATION_CREDENTIALS=path/to/your/firebase/credentials.json
+ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
+# Note: there is no ENCRYPTION_KEY — encryption is client-side (zero-knowledge).
 
-# Run database migrations
-go run cmd/migrate/main.go
-
-# Start the server
+# Start the server (database migrations run automatically on startup)
 go run main.go
 ```
 
