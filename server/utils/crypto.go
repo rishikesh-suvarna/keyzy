@@ -5,19 +5,47 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 type CryptoService struct {
 	key []byte
 }
 
+// NewCryptoService builds an AES-256 crypto service from the configured key.
+// The key must decode to exactly 32 bytes. Accepted forms:
+//   - 32 raw characters (e.g. a 32-char passphrase)
+//   - base64 encoding of 32 bytes
+//   - hex encoding of 32 bytes
+//
+// A malformed or weak key is rejected outright — it is never padded or
+// truncated, because doing so silently destroys the key's entropy.
 func NewCryptoService(key string) (*CryptoService, error) {
-	if len(key) != 32 {
-		return nil, fmt.Errorf("key must be 32 bytes long")
+	decoded, err := decodeKey(key)
+	if err != nil {
+		return nil, err
 	}
-	return &CryptoService{key: []byte(key)}, nil
+	return &CryptoService{key: decoded}, nil
+}
+
+func decodeKey(key string) ([]byte, error) {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return nil, fmt.Errorf("ENCRYPTION_KEY is not set")
+	}
+	if b, err := base64.StdEncoding.DecodeString(key); err == nil && len(b) == 32 {
+		return b, nil
+	}
+	if b, err := hex.DecodeString(key); err == nil && len(b) == 32 {
+		return b, nil
+	}
+	if len(key) == 32 {
+		return []byte(key), nil
+	}
+	return nil, fmt.Errorf("ENCRYPTION_KEY must be 32 bytes (a 32-character string, or the base64/hex encoding of 32 bytes); got %d characters", len(key))
 }
 
 func (c *CryptoService) Encrypt(plaintext string) (string, error) {

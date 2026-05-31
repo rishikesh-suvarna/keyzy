@@ -16,8 +16,19 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize Firebase
-	middleware.InitializeFirebase()
+	// Wire runtime config (CORS allowlist, dev-auth flag) into middleware
+	middleware.Configure(cfg)
+
+	// Initialize Firebase. Fail closed: if auth can't initialize we refuse to
+	// start, unless the insecure dev bypass has been explicitly enabled.
+	if err := middleware.InitializeFirebase(cfg); err != nil {
+		if cfg.AllowInsecureDevAuth {
+			log.Printf("WARNING: %v", err)
+			log.Printf("WARNING: continuing with ALLOW_INSECURE_DEV_AUTH — DO NOT use in production")
+		} else {
+			log.Fatalf("Failed to initialize authentication: %v", err)
+		}
+	}
 
 	// Initialize database connection
 	db, err := database.Connect(cfg.DatabaseURL)
@@ -33,7 +44,10 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db)
-	passwordHandler := handlers.NewPasswordHandler(db, cfg.EncryptionKey)
+	passwordHandler, err := handlers.NewPasswordHandler(db, cfg.EncryptionKey)
+	if err != nil {
+		log.Fatalf("Failed to initialize password handler: %v", err)
+	}
 
 	// Setup router
 	router := mux.NewRouter()
@@ -47,13 +61,14 @@ func main() {
 		w.Write([]byte(`{"status": "ok"}`))
 	}).Methods("GET", "OPTIONS")
 
-	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
-
 	// Protected routes
 	api := router.PathPrefix("/api").Subrouter()
 
-	// Apply CORS middleware to API routes
+	// Apply auth middleware to API routes
 	api.Use(middleware.AuthMiddleware)
+
+	// Register requires a verified token; identity comes from the token, not the body
+	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST", "OPTIONS")
 
 	// User routes
 	api.HandleFunc("/user/profile", authHandler.GetProfile).Methods("GET", "OPTIONS")

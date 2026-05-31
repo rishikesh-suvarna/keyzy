@@ -17,24 +17,24 @@ func NewAuthHandler(db *sql.DB) *AuthHandler {
 	return &AuthHandler{db: db}
 }
 
-// Register creates a new user in our database after Firebase authentication
+// Register creates a new user in our database after Firebase authentication.
+// The identity is taken from the *verified* Firebase token (populated by
+// AuthMiddleware), never from the request body — so a caller cannot register
+// or impersonate an arbitrary UID/email.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		FirebaseUID string `json:"firebase_uid"`
-		Email       string `json:"email"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	firebaseUID := middleware.GetFirebaseUID(r)
+	if firebaseUID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	email := middleware.GetUserEmail(r)
 
 	// Check if user already exists
 	var existingUser models.User
 	err := h.db.QueryRow(`
-		SELECT id, firebase_uid, email, created_at, updated_at 
+		SELECT id, firebase_uid, email, created_at, updated_at
 		FROM users WHERE firebase_uid = $1
-	`, req.FirebaseUID).Scan(
+	`, firebaseUID).Scan(
 		&existingUser.ID,
 		&existingUser.FirebaseUID,
 		&existingUser.Email,
@@ -61,10 +61,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Create new user
 	var newUser models.User
 	err = h.db.QueryRow(`
-		INSERT INTO users (firebase_uid, email) 
-		VALUES ($1, $2) 
+		INSERT INTO users (firebase_uid, email)
+		VALUES ($1, $2)
 		RETURNING id, firebase_uid, email, created_at, updated_at
-	`, req.FirebaseUID, req.Email).Scan(
+	`, firebaseUID, email).Scan(
 		&newUser.ID,
 		&newUser.FirebaseUID,
 		&newUser.Email,

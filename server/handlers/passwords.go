@@ -21,17 +21,17 @@ type PasswordHandler struct {
 	generator     *utils.PasswordGenerator
 }
 
-func NewPasswordHandler(db *sql.DB, encryptionKey string) *PasswordHandler {
+func NewPasswordHandler(db *sql.DB, encryptionKey string) (*PasswordHandler, error) {
 	cryptoService, err := utils.NewCryptoService(encryptionKey)
 	if err != nil {
-		panic("Failed to initialize crypto service: " + err.Error())
+		return nil, err
 	}
 
 	return &PasswordHandler{
 		db:            db,
 		cryptoService: cryptoService,
 		generator:     utils.NewPasswordGenerator(),
-	}
+	}, nil
 }
 
 // GetPasswords returns all password entries for the authenticated user
