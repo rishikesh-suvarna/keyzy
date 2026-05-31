@@ -33,8 +33,11 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           "$(go env GOPATH)/bin/govulncheck" ./...
 
-  client:
-    name: Client (Next.js)
+  # The Next.js client is built and deployed by Vercel, so we don't rebuild it
+  # here — we only audit its dependencies for vulnerabilities (which Vercel does
+  # not do).
+  client-audit:
+    name: Client (dependency audit)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,9 +54,6 @@ jobs:
 
       - name: Install
         run: npm ci
-
-      - name: Build
-        run: npm run build
 
       - name: npm audit (high severity)
         run: npm audit --audit-level=high
